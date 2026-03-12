@@ -1,0 +1,13 @@
+[frac]
+type = "Template"
+template = '\frac{{0}}{{1}}'
+alias = ["f"]
+
+[mat]
+type = "Environment"
+env_name = "pmatrix"
+alias = ["m"]
+
+[lim]
+type = "Template"
+template = '\lim_{{{0} \to {1}}} {{{2}}}'
