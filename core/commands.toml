@@ -1,6 +1,7 @@
 [frac]
 type = "Template"
-template = '\frac{{0}}{{1}}'
+template = '\frac{$0}{$1}'
+args_count = 2
 alias = ["f"]
 
 [mat]
@@ -10,4 +11,5 @@ alias = ["m"]
 
 [lim]
 type = "Template"
-template = '\lim_{{{0} \to {1}}} {{{2}}}'
+template = '\lim_{$0 \to $1} $2'
+args_count = 2

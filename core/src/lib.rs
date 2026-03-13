@@ -3,14 +3,14 @@ use std::{
     collections::HashMap,
     fmt::{self},
     fs,
-    path::{Path, PathBuf},
+    path::Path,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail, ensure};
 use serde::Deserialize;
 
 #[derive(Clone)]
-enum Node {
+pub enum Node {
     /// ルートノード（ドキュメント全体）
     Root(Vec<Node>),
 
@@ -60,42 +60,45 @@ impl Node {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
-enum RenderType {
-    Template,
-    Environment,
-}
+// #[derive(Debug, Deserialize, Clone)]
+// pub enum RenderType {
+//     Template,
+//     Environment,
+// }
 
 #[derive(Debug, Deserialize, Clone)]
-struct CommandConfig {
-    #[serde(rename = "type")]
-    render_type: RenderType,
-    template: Option<String>,
-    env_name: Option<String>,
-    alias: Option<Vec<String>>,
+#[serde(tag = "type")] // "type" フィールドの値で分岐
+pub enum CommandConfig {
+    #[serde(rename = "Template")]
+    Template(TemplateConfig),
+
+    #[serde(rename = "Regex")]
+    Regex(RegexConfig),
+
+    #[serde(rename = "Environment")]
+    Env(EnvConfig),
 }
 
-fn main() -> Result<()> {
-    let sample = r"
-frac
-  lim
-    n
-    inf
-    n^2
-  frac
-    1
-    n
-    ";
-
-    // TODO: 保存先をOS依存なしに
-    let configs = load_command_config(&PathBuf::from("./commands.toml"))?;
-
-    let tree = parse_to_tree(sample, &configs)?;
-    println!("{}", get_latex(&tree, &configs)?);
-    Ok(())
+#[derive(Debug, Deserialize, Clone)]
+pub struct TemplateConfig {
+    pub template: String,
+    pub args_count: usize,
+    pub alias: Option<Vec<String>>,
 }
 
-fn parse_to_tree(sample: &str, configs: &HashMap<String, CommandConfig>) -> Result<Node> {
+#[derive(Debug, Deserialize, Clone)]
+pub struct RegexConfig {
+    pub pattern: String,
+    pub template: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct EnvConfig {
+    pub env_name: String,
+    pub alias: Option<Vec<String>>,
+}
+
+pub fn parse_to_tree(sample: &str, configs: &HashMap<String, CommandConfig>) -> Result<Node> {
     let mut stack: Vec<(Node, usize)> = vec![(Node::Root(Vec::new()), 0)];
     for line in sample.lines() {
         if is_empty_line(line) {
@@ -169,85 +172,94 @@ fn is_empty_line(line: &str) -> bool {
     line.is_empty() || line.chars().filter(|c| !c.is_ascii_whitespace()).count() == 0
 }
 
-fn get_latex(node: &Node, configs: &HashMap<String, CommandConfig>) -> Result<String> {
-    match node {
-        Node::Root(children) => {
-            let parts: Result<Vec<String>> =
-                children.iter().map(|c| get_latex(c, configs)).collect();
-            Ok(parts?.join(""))
-        }
-        Node::Command { name, children } => match configs.get(name) {
-            Some(config) => match config.render_type {
-                RenderType::Template => format_template(name, children, configs),
-                RenderType::Environment => {
-                    // env_name があれば使い、なければ name を使う
-                    let env_name = config.env_name.as_deref().unwrap_or(name);
-                    Ok(format_environment(env_name, children, configs)?)
-                }
+pub struct CommandLatexConverter<'a> {
+    pub configs: &'a HashMap<String, CommandConfig>,
+}
+
+impl<'a> CommandLatexConverter<'a> {
+    pub fn compile_command_into_latex(&self, node: &Node) -> Result<String> {
+        match node {
+            Node::Root(children) => {
+                let parts: Result<Vec<String>> = children
+                    .iter()
+                    .map(|c| self.compile_command_into_latex(c))
+                    .collect();
+                Ok(parts?.join(""))
+            }
+            Node::Command { name, children } => match self.configs.get(name) {
+                Some(config) => match config {
+                    CommandConfig::Template(t) => self.format_template(name, children, t),
+                    CommandConfig::Env(c) => Ok(self.format_environment(&c.env_name, children)?),
+                    CommandConfig::Regex(_) => {
+                        todo!()
+                    }
+                },
+                None => Err(anyhow::anyhow!("no command found")),
             },
-            None => Err(anyhow::anyhow!("no command found")),
-        },
-        Node::Leaf(text) => Ok(text.to_string()),
+            Node::Leaf(text) => Ok(text.to_string()),
+        }
+    }
+    fn format_environment(&self, name: &str, children: &[Node]) -> Result<String> {
+        let mut command = String::new();
+        command.push_str("\\begin{");
+        command.push_str(name);
+        command.push('}');
+        command.push('\n');
+        let body = children
+            .iter()
+            .map(|child| self.compile_command_into_latex(child))
+            .collect::<Result<Vec<_>>>()?
+            .join(" \\\\ \n");
+        command.push_str(&body);
+        command.push('\n');
+        command.push_str("\\end{");
+        command.push_str(name);
+        command.push('}');
+        Ok(command)
+    }
+
+    fn format_template(
+        &self,
+        name: &str,
+        children: &[Node],
+        config: &TemplateConfig,
+    ) -> Result<String> {
+        let mut template = config.template.clone();
+
+        let required = config.args_count;
+        ensure!(
+            children.len() == required,
+            "コマンド '{}' は引数を {} 個必要としますが、{} 個しかありません。",
+            name,
+            required,
+            children.len()
+        );
+        for (i, child) in children.iter().enumerate() {
+            // $0, $1, $2... を探して置換
+            let placeholder = format!("${}", i);
+            let replacement = self.compile_command_into_latex(child)?;
+            template = template.replace(&placeholder, &replacement);
+        }
+
+        Ok(template)
     }
 }
 
-fn format_environment(
-    name: &str,
-    children: &[Node],
-    configs: &HashMap<String, CommandConfig>,
-) -> Result<String> {
-    let mut command = String::new();
-    command.push_str("\\begin{");
-    command.push_str(name);
-    command.push('}');
-    command.push('\n');
-    let body = children
-        .iter()
-        .map(|child| get_latex(child, configs))
-        .collect::<Result<Vec<_>>>()?
-        .join(" \\\\ \n");
-    command.push_str(&body);
-    command.push('\n');
-    command.push_str("\\end{");
-    command.push_str(name);
-    command.push('}');
-    Ok(command)
-}
-
-fn format_template(
-    name: &str,
-    children: &[Node],
-    configs: &HashMap<String, CommandConfig>,
-) -> Result<String> {
-    let config = configs.get(name).expect("get_latexで存在確認済み");
-    let mut template = config
-        .template
-        .as_ref() // これないと怒られる。よくわかってない
-        .with_context(|| {
-            format!(
-                "Command {} is Template type but has no template string",
-                name
-            )
-        })?
-        .clone();
-
-    for (i, child) in children.iter().enumerate() {
-        let placeholder = format!("{{{}}}", i);
-        let replacement = get_latex(child, configs)?;
-        template = template.replace(&placeholder, &replacement);
-    }
-
-    Ok(template)
-}
-
-fn load_command_config(path: &Path) -> Result<HashMap<String, CommandConfig>> {
+const DEFAULT_CONFIG_STR: &str = include_str!("../commands.toml");
+pub fn load_command_config(path: Option<&Path>) -> Result<HashMap<String, CommandConfig>> {
     // TODO: 重複時に警告するプロセスを作成
-    let content = fs::read_to_string(path)?;
+    let content = match path {
+        Some(p) => fs::read_to_string(p)?,
+        None => DEFAULT_CONFIG_STR.to_string(),
+    };
     let map: HashMap<String, CommandConfig> = toml::from_str(&content)?;
     let mut map_extended: HashMap<String, CommandConfig> = HashMap::new();
     for (name, config) in map {
-        if let Some(aliases) = &config.alias {
-            aliases.iter().for_each(|a| {
+        if let CommandConfig::Template(t) = &config {
+            if t.alias.is_none() {
+                continue;
+            }
+            t.alias.as_ref().unwrap().iter().for_each(|a| {
                 map_extended.insert(a.clone(), config.clone());
             });
         }
