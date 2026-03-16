@@ -12,22 +12,27 @@ use serde::Deserialize;
 #[derive(Clone)]
 pub enum Node {
     /// ルートノード（ドキュメント全体）
-    Root(Vec<Node>),
+    Root {
+        children: Vec<Node>,
+        line_num: usize,
+    },
 
     /// 特定のコマンド（mat, sumなど）
     Command {
         name: String,
         children: Vec<Node>, // 子要素もNodeなので再帰的
+        line_num: usize,
     },
 
     /// 最小単位（x + y など、これ以上分解しない文字列）
-    Leaf(String),
+    Leaf { content: String, line_num: usize },
 }
 impl Node {
-    fn command(name: String) -> Node {
+    fn command(name: String, line_num: usize) -> Node {
         Node::Command {
             name,
             children: Vec::new(),
+            line_num,
         }
     }
 }
@@ -40,20 +45,20 @@ impl Node {
     fn fmt_tree(&self, f: &mut fmt::Formatter<'_>, depth: usize) -> fmt::Result {
         let indent = "  ".repeat(depth);
         match self {
-            Node::Root(children) => {
+            Node::Root { children, .. } => {
                 writeln!(f, "{}Root", indent)?;
                 for child in children {
                     child.fmt_tree(f, depth + 1)?;
                 }
             }
-            Node::Command { name, children } => {
+            Node::Command { name, children, .. } => {
                 writeln!(f, "{}Command({})", indent, name)?;
                 for child in children {
                     child.fmt_tree(f, depth + 1)?;
                 }
             }
-            Node::Leaf(s) => {
-                writeln!(f, "{}Leaf({})", indent, s)?;
+            Node::Leaf { content, .. } => {
+                writeln!(f, "{}Leaf({})", indent, content)?;
             }
         }
         Ok(())
@@ -99,62 +104,105 @@ pub struct EnvConfig {
 }
 
 pub fn parse_to_tree(sample: &str, configs: &HashMap<String, CommandConfig>) -> Result<Node> {
-    let mut stack: Vec<(Node, usize)> = vec![(Node::Root(Vec::new()), 0)];
-    for line in sample.lines() {
+    let mut stack: Vec<(Node, usize)> = vec![(
+        Node::Root {
+            children: Vec::new(),
+            line_num: 0,
+        },
+        0,
+    )];
+    for (i, line) in sample.lines().enumerate() {
         if is_empty_line(line) {
             continue;
         }
+        let trimed = line.trim().to_string();
         let last_indent: usize = stack.last().unwrap().1;
         let current_indent = get_indent(line);
         let indent_comparison = current_indent.cmp(&last_indent);
         match indent_comparison {
-            Ordering::Greater | Ordering::Equal => {
-                let trimed = line.trim().to_string();
-                if configs.contains_key(&trimed.to_string()) {
-                    if indent_comparison == Ordering::Equal {
-                        let (finished_node, _) = stack.pop().unwrap();
-                        if let Some((Node::Root(children) | Node::Command { children, .. }, _)) =
-                            stack.last_mut()
-                        {
-                            children.push(finished_node);
-                        }
-                    }
-                    stack.push((Node::command(trimed), current_indent));
-                } else {
-                    //this condition is always true
-                    if let Some((Node::Root(children) | Node::Command { children, .. }, _)) =
-                        stack.last_mut()
-                    {
-                        children.push(Node::Leaf(trimed));
-                    }
-                }
-            }
+            Ordering::Greater | Ordering::Equal => {}
             Ordering::Less => {
-                while let Some(top) = stack.last() {
-                    if top.1 > current_indent {
-                        let (finished_node, _) = stack.pop().unwrap();
-                        if let Some((Node::Root(children) | Node::Command { children, .. }, _)) =
-                            stack.last_mut()
-                        {
-                            children.push(finished_node);
-                        }
-                    } else {
-                        break;
-                    }
-                }
+                fold_stack(&mut stack, current_indent).with_context(|| {
+                    format!(
+                        "Failed to parse block starting at line {}: \"{}\"",
+                        i + 1,
+                        trimed
+                    )
+                })?;
             }
+        }
+
+        if configs.contains_key(&trimed.to_string()) {
+            stack.push((Node::command(trimed, i), current_indent));
+        } else {
+            stack.push((
+                Node::Leaf {
+                    content: trimed,
+                    line_num: i,
+                },
+                current_indent,
+            ));
         }
     }
 
-    while stack.len() > 1 {
-        let (finished_node, _) = stack.pop().unwrap();
-        if let Some((Node::Root(children) | Node::Command { children, .. }, _)) = stack.last_mut() {
-            children.push(finished_node);
-        }
-    }
+    fold_stack(&mut stack, 0).with_context(|| "Failed to fold stacks")?;
 
     let root = stack.first().unwrap();
     Ok(root.clone().0)
+}
+
+fn fold_stack(stack: &mut Vec<(Node, usize)>, into: usize) -> Result<()> {
+    let mut wait: Vec<(Node, usize)> = Vec::new();
+
+    while stack
+        .last()
+        .context("fold_stack requires stack with any content")?
+        .1
+        > into
+    {
+        // popped がstack自体を奪うわけではないので引き続きstackは参照可能。
+        let popped = stack.pop().unwrap();
+        // usizeはCopyトレイトを持つので、今後もpoppedへのアクセスは可能
+        let popped_indent = popped.1;
+        // stackの最後の要素の可変参照を得る。「以降Stackの直接参照は不可能」
+        let top = stack.last_mut().unwrap();
+        // usizeはCopyトレイトを持つので、今後もtopへのアクセスは可能
+        let top_indent = top.1;
+        // waitに中身を完全に渡したのでここ以下でpoppedの参照は不可.
+        wait.push(popped);
+
+        if popped_indent != top_indent {
+            // &mutにすることで、参照なので無駄なメモリ消費が無く、なおかつmutなのでchildrenの変更が可能
+            match &mut top.0 {
+                Node::Root { children, .. } | Node::Command { children, .. } => {
+                    while !wait.is_empty() {
+                        children.push(wait.pop().unwrap().0);
+                    }
+                }
+                Node::Leaf { content, line_num } => {
+                    bail!(
+                        "'{}' (at line {}) is not a command and cannot have children",
+                        content,
+                        *line_num + 1
+                    )
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn format_my_error(body: &str, line_num: usize, raw_line: &str) -> String {
+    format!(
+        "Error: {}\n  at line {}: \"{}\"",
+        body,
+        line_num + 1, // プログラム上の0開始を、人間用の1開始に変換
+        raw_line.trim()
+    )
+}
+
+fn trigger_my_error(body: &str, line_num: usize, raw_line: &str) -> Result<()> {
+    bail!(format_my_error(body, line_num, raw_line));
 }
 
 fn get_indent(text: &str) -> usize {
@@ -179,14 +227,14 @@ pub struct CommandLatexConverter<'a> {
 impl<'a> CommandLatexConverter<'a> {
     pub fn compile_command_into_latex(&self, node: &Node) -> Result<String> {
         match node {
-            Node::Root(children) => {
+            Node::Root { children, .. } => {
                 let parts: Result<Vec<String>> = children
                     .iter()
                     .map(|c| self.compile_command_into_latex(c))
                     .collect();
                 Ok(parts?.join(""))
             }
-            Node::Command { name, children } => match self.configs.get(name) {
+            Node::Command { name, children, .. } => match self.configs.get(name) {
                 Some(config) => match config {
                     CommandConfig::Template(t) => self.format_template(name, children, t),
                     CommandConfig::Env(c) => Ok(self.format_environment(&c.env_name, children)?),
@@ -196,11 +244,12 @@ impl<'a> CommandLatexConverter<'a> {
                 },
                 None => Err(anyhow::anyhow!("no command found")),
             },
-            Node::Leaf(text) => Ok(text.to_string()),
+            Node::Leaf { content: text, .. } => Ok(text.to_string()),
         }
     }
     fn format_environment(&self, name: &str, children: &[Node]) -> Result<String> {
         let mut command = String::new();
+        command.push('\n');
         command.push_str("\\begin{");
         command.push_str(name);
         command.push('}');
@@ -215,6 +264,7 @@ impl<'a> CommandLatexConverter<'a> {
         command.push_str("\\end{");
         command.push_str(name);
         command.push('}');
+        command.push('\n');
         Ok(command)
     }
 
@@ -255,14 +305,17 @@ pub fn load_command_config(path: Option<&Path>) -> Result<HashMap<String, Comman
     let map: HashMap<String, CommandConfig> = toml::from_str(&content)?;
     let mut map_extended: HashMap<String, CommandConfig> = HashMap::new();
     for (name, config) in map {
-        if let CommandConfig::Template(t) = &config {
-            if t.alias.is_none() {
-                continue;
+        let aliases: Option<&Vec<String>> = match &config {
+            CommandConfig::Template(t) => t.alias.as_ref(),
+            CommandConfig::Env(e) => e.alias.as_ref(),
+            CommandConfig::Regex(_) => None,
+        };
+        if let Some(aliases) = aliases {
+            for alias in aliases {
+                map_extended.insert(alias.clone(), config.clone());
             }
-            t.alias.as_ref().unwrap().iter().for_each(|a| {
-                map_extended.insert(a.clone(), config.clone());
-            });
         }
+
         map_extended.insert(name, config);
     }
     Ok(map_extended)

@@ -6,14 +6,11 @@ fn main() -> anyhow::Result<()> {
 
     let root = mytex::parse_to_tree(
         r"
-            frac
-             1
-             2
             mat
              1 1 1
              1 1 1
              1 1 1
-            +
+            \cdot
             mat
              1 1 1
              1 1 1
