@@ -1,13 +1,13 @@
 use std::{
     cmp::Ordering,
     collections::HashMap,
-    fmt::{self},
+    fmt::{self, format},
     fs,
     path::Path,
 };
 
 use anyhow::{Context, Result, bail, ensure};
-use regex::{Captures, Regex};
+use regex::Regex;
 use serde::Deserialize;
 
 #[derive(Clone)]
@@ -21,6 +21,7 @@ pub enum Node {
     /// 特定のコマンド（mat, sumなど）
     Command {
         name: String,
+        config_key: String,
         captures: Option<Vec<String>>,
         children: Vec<Node>, // 子要素もNodeなので再帰的
         line_num: usize,
@@ -30,9 +31,15 @@ pub enum Node {
     Leaf { content: String, line_num: usize },
 }
 impl Node {
-    fn command(name: String, captures: Option<Vec<String>>, line_num: usize) -> Node {
+    fn command(
+        name: String,
+        config_key: String,
+        captures: Option<Vec<String>>,
+        line_num: usize,
+    ) -> Node {
         Node::Command {
             name,
+            config_key,
             captures,
             children: Vec::new(),
             line_num,
@@ -107,8 +114,13 @@ pub struct EnvConfig {
     pub env_name: String,
     pub output_prefix: Option<String>,
     pub output_suffix: Option<String>,
-    pub replacements: Option<Vec<Replacement>>,
+    pub line_prefix: Option<String>,
+    pub line_suffix: Option<String>,
     pub alias: Option<Vec<String>>,
+    #[serde(default)] // 何もなければString::new()つまり""が入る
+    pub row_separator: String,
+    #[serde(default)] // 何もなければString::new()つまり""が入る
+    pub col_separator: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -146,60 +158,68 @@ pub fn parse_to_tree(sample: &str, configs: &HashMap<String, CommandConfig>) -> 
             }
         }
 
-        // find_map = map + any
-        // コマンドそれぞれに対してチェック＆見つかれば
-        // Some(capture)を返す。それ以外はNone
-        let command_match: Option<Vec<_>> = configs.values().find_map(|c| {
-            let raw_pattern = match c {
+        let mut is_command = false;
+
+        for (key, config) in configs {
+            let raw_pattern: &str = match config {
                 CommandConfig::Template(t) => &t.pattern,
                 CommandConfig::Env(e) => &e.pattern,
                 CommandConfig::Regex(r) => &r.pattern,
             };
-            let pattern_str = if raw_pattern.starts_with('^') {
+            let sandwiched_pattern: String = if raw_pattern.starts_with('^') {
                 raw_pattern.to_string()
             } else {
                 format!("^{}$", raw_pattern)
             };
-            let pattern = Regex::new(&pattern_str).expect("invalid regex pattern");
-            pattern
-                .captures(&trimed)?
-                .iter()
-                .skip(1)
-                .map(|m| m.map(|m| m.as_str().to_string()))
-                .collect()
-        });
-
-        dbg!(&command_match);
-
-        match command_match {
-            Some(captures) => {
-                // コマンドにマッチ
-                println!("{}はコマンドです", trimed);
-                stack.push((Node::command(trimed, Some(captures), i), current_indent));
-            }
-            None => {
-                // コマンドではない
-                stack.push((
-                    Node::Leaf {
-                        content: trimed,
-                        line_num: i,
-                    },
-                    current_indent,
-                ));
+            let regex_pattern = Regex::new(&sandwiched_pattern).with_context(|| {
+                format!(
+                    "invalid regex pattern detected in command config: field \"{}\" in {} ",
+                    raw_pattern, key
+                )
+            })?;
+            let captures = regex_pattern.captures(&trimed);
+            match captures {
+                Some(c) => {
+                    // このコマンドパターンにマッチした
+                    let captures = c
+                        .iter()
+                        .skip(1)
+                        .map(|m| m.map(|m| m.as_str().to_string()))
+                        .collect::<Option<Vec<String>>>();
+                    match captures {
+                        Some(c) => {
+                            // すべてのキャプチャグループの値が省略されずに存在している。
+                            // 空文字にマッチした場合も含む。
+                            is_command = true;
+                            stack.push((
+                                Node::command(trimed.clone(), key.clone(), Some(c), i),
+                                current_indent,
+                            ));
+                            break;
+                        }
+                        None => {
+                            // パターンには省略可能なキャプチャグループが少なくとも１つ存在し、
+                            // 実際に省略された。
+                            bail!("省略可能なキャプチャグループは使用できません");
+                        }
+                    }
+                }
+                None => {
+                    // このコマンドパターンにマッチしなかった
+                    continue;
+                }
             }
         }
 
-        // if configs.contains_key(&trimed.to_string()) {
-        //     stack.push((Node::command(trimed, i), current_indent));
-        // } else {
-        //     stack.push((
-        //         Node::Leaf {
-        //             content: trimed,
-        //             line_num: i,
-        //         },
-        //         current_indent,
-        //     ));
-        // }
+        if !is_command {
+            stack.push((
+                Node::Leaf {
+                    content: trimed,
+                    line_num: i,
+                },
+                current_indent,
+            ));
+        }
     }
 
     fold_stack(&mut stack, 0).with_context(|| "Failed to fold stacks")?;
@@ -291,55 +311,57 @@ impl<'a> CommandLatexConverter<'a> {
                     .collect();
                 Ok(parts?.join(""))
             }
-            Node::Command { name, children, .. } => match self.configs.get(name) {
+            Node::Command {
+                name,
+                config_key,
+                children,
+                captures,
+                ..
+            } => match self.configs.get(config_key) {
                 Some(config) => match config {
                     CommandConfig::Template(t) => self.format_template(name, children, t),
-                    CommandConfig::Env(c) => Ok(self.format_environment(&c, children)?),
-                    CommandConfig::Regex(_) => {
-                        todo!()
-                    }
+                    CommandConfig::Env(c) => self.format_environment(c, children),
+                    CommandConfig::Regex(c) => self.format_regex(captures.clone(), c),
                 },
-                None => Err(anyhow::anyhow!("no command found")),
+                None => bail!("{} is unknown command type", name),
             },
             Node::Leaf { content: text, .. } => Ok(text.to_string()),
         }
     }
     fn format_environment(&self, config: &EnvConfig, children: &[Node]) -> Result<String> {
         let mut command = String::new();
-        command.push('\n');
+        // command.push('\n');
         if let Some(s) = &config.output_prefix {
             command.push_str(s);
         }
         command.push_str("\\begin{");
         command.push_str(&config.env_name);
         command.push('}');
-        command.push('\n');
+        // command.push('\n');
+        let line_prefix = config.line_prefix.as_deref().unwrap_or("");
+        let line_suffix = config.line_suffix.as_deref().unwrap_or("");
         let body = children
             .iter()
             .map(|child| match child {
                 Node::Leaf { content, .. } => {
-                    dbg!(&config.replacements);
-                    let converted = match &config.replacements {
-                        Some(replacements) => replacements
-                            .iter()
-                            .fold(content.clone(), |acc, r| acc.replace(&r.from, &r.to)),
-                        None => content.clone(),
-                    };
+                    // dbg!(&config.replacements);
+                    let converted = content.clone().replace(" ", &config.col_separator);
                     Ok(converted)
                 }
                 _ => self.compile_command_into_latex(child),
             })
+            .map(|child| Ok(format!("{}{}{}", line_prefix, child?, line_suffix)))
             .collect::<Result<Vec<_>>>()?
-            .join(" \\\\ \n");
+            .join(&config.row_separator); //改行削除した
         command.push_str(&body);
-        command.push('\n');
+        // command.push('\n');
         command.push_str("\\end{");
         command.push_str(&config.env_name);
         command.push('}');
         if let Some(s) = &config.output_suffix {
             command.push_str(s);
         }
-        command.push('\n');
+        // command.push('\n');
         Ok(command)
     }
 
@@ -368,6 +390,29 @@ impl<'a> CommandLatexConverter<'a> {
 
         Ok(template)
     }
+
+    fn format_regex(&self, captures: Option<Vec<String>>, config: &RegexConfig) -> Result<String> {
+        let mut template = config.template.clone();
+        let captures = captures.unwrap_or_default();
+        let placeholder = Regex::new(r"\$[0-9]+").unwrap();
+        let placeholder_count = placeholder.find_iter(&template).count();
+        ensure!(
+            captures.len() == placeholder_count,
+            "テンプレート '{}' は引数を {} 個必要としますが、有効なキャプチャーグループが{} 個しかありません。",
+            template,
+            placeholder_count,
+            captures.len()
+        );
+        // あえて大きい数字から見ることで$10を$1と誤認することを防ぐ
+        for i in (0..captures.len()).rev() {
+            // $0, $1, $2... を探して置換
+            let placeholder = format!("${}", i + 1); //$1から
+            let replacement = captures.get(i).expect("ensureで存在確認済み");
+            template = template.replace(&placeholder, replacement);
+        }
+
+        Ok(template)
+    }
 }
 
 const DEFAULT_CONFIG_STR: &str = include_str!("../commands.toml");
@@ -387,10 +432,20 @@ pub fn load_command_config(path: Option<&Path>) -> Result<HashMap<String, Comman
         };
         if let Some(aliases) = aliases {
             for alias in aliases {
-                map_extended.insert(alias.clone(), config.clone());
+                let aliased_config = match &config {
+                    CommandConfig::Template(t) => CommandConfig::Template(TemplateConfig {
+                        pattern: alias.clone(),
+                        ..t.clone()
+                    }),
+                    CommandConfig::Env(e) => CommandConfig::Env(EnvConfig {
+                        pattern: alias.clone(),
+                        ..e.clone()
+                    }),
+                    CommandConfig::Regex(_) => unreachable!(),
+                };
+                map_extended.insert(alias.clone(), aliased_config);
             }
         }
-
         map_extended.insert(name, config);
     }
     Ok(map_extended)

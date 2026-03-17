@@ -2,19 +2,21 @@ use mytex::load_command_config;
 
 fn main() -> anyhow::Result<()> {
     let configs = load_command_config(None)?;
+    // dbg!(&configs);
     let converter = mytex::CommandLatexConverter { configs: &configs };
 
     let root = mytex::parse_to_tree(
         r"
-            mat
-             1 1 1
-             1 1 1
-             1 1 1
-            \cdot
-            mat
-             1 1 1
-             1 1 1
-             1 1 1
+        # hello
+        this is a plain text
+        # world
+        $$
+         frac
+          1
+          2
+         mat
+          1 2
+          3 4
         ",
         &configs,
     )?;

@@ -1,34 +1,71 @@
 # Ensure not to use double quartation.
-# pattern requires escapement
+# pattern and escape requires escapement
+
+# Math---------------------------------------
 [frac]
+## escapement(for Regex) required
 pattern = 'frac'
 type = 'Template'
 template = '\frac{$0}{$1}'
 args_count = 2
+## escapement(for Regex) required
 alias = ["f"]
 
-# matrix
+## matrix
 [mat]
 pattern = 'mat'
 type = 'Environment'
 env_name = 'bmatrix'
 alias = ['m']
-[[mat.replacements]]
-from = ' '
-to = '&'
+row_separator = '\\'
+col_separator = '&'
 [vmat]
 pattern = '\|mat\|'
 type = "Environment"
 env_name = "vmatrix"
 alias = ['\|m\|']
+row_separator = '\\'
 [tmat]
 pattern = 'mat\^t'
 type = 'Environment'
 env_name = 'bmatrix'
 alias = ['m\^t']
+row_separator = '\\'
+output_suffix = '^{\top}'
+
 
 [lim]
 pattern = 'lim'
 type = 'Template'
 template = '\lim_{$0 \to $1} $2'
 args_count = 2
+
+
+# Document
+[h1]
+pattern = '^# (.+)$'
+type = "Regex"
+template = '\section{$1}'
+
+[h2]
+pattern = '^## (.+)$'
+type = "Regex"
+template = '\subsection{$1}'
+
+[h3]
+pattern = '^### (.+)$'
+type = "Regex"
+template = '\subsubsection{$1}'
+
+[itemize]
+pattern = "itemize"
+type = "Environment"
+env_name = "itemize"
+row_separator = '\item '
+
+# Structure
+[display_math]
+pattern = '\$\$'
+type = "Environment"
+env_name = "equation*"
+# row_separator省略 → ""
