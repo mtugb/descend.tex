@@ -11,7 +11,6 @@ args_count = 2
 ## escapement(for Regex) required
 alias = ["f"]
 
-## matrix
 [mat]
 pattern = 'mat'
 type = 'Environment'
@@ -33,19 +32,66 @@ alias = ['m\^t']
 row_separator = '\\'
 output_suffix = '^{\top}'
 
-
 [lim]
 pattern = 'lim'
 type = 'Template'
 template = '\lim_{$0 \to $1} $2'
 args_count = 2
 
-# [align]
-# pattern = 'align'
-# type = 'Environment'
-# env_name = 'align'
-# alias = ['\&\&']
-# row_separator = '\\'
+[integral]
+pattern = 'int'
+type = 'Template'
+template = '\int_{$0}^{$1} $2 \, d$3'
+args_count = 4
+alias = ['integral']
+
+[sum]
+pattern = 'sum'
+type = 'Template'
+template = '\sum_{$0}^{$1} $2'
+args_count = 3
+
+[prod]
+pattern = 'prod'
+type = 'Template'
+template = '\prod_{$0}^{$1} $2'
+args_count = 3
+
+[sqrt]
+pattern = 'sqrt'
+type = 'Template'
+template = '\sqrt{$0}'
+args_count = 1
+
+[nsqrt]
+pattern = 'nsqrt'
+type = 'Template'
+template = '\sqrt[$0]{$1}'
+args_count = 2
+
+[abs]
+pattern = 'abs'
+type = 'Template'
+template = '\left|$0\right|'
+args_count = 1
+
+[norm]
+pattern = 'norm'
+type = 'Template'
+template = '\left\|$0\right\|'
+args_count = 1
+
+[ceil]
+pattern = 'ceil'
+type = 'Template'
+template = '\left\lceil$0\right\rceil'
+args_count = 1
+
+[floor]
+pattern = 'floor'
+type = 'Template'
+template = '\left\lfloor$0\right\rfloor'
+args_count = 1
 
 # Document
 [h1]

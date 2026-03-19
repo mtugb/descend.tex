@@ -1,3 +1,75 @@
 [[replacements]]
+pattern = '<->'
+to = '\\leftrightarrow'
+
+[[replacements]]
+pattern = '=>'
+to = '\\Rightarrow'
+
+[[replacements]]
 pattern = '->'
 to = '\\rightarrow'
+
+[[replacements]]
+pattern = '<-'
+to = '\\leftarrow'
+
+[[replacements]]
+pattern = '<='
+to = '\\leq'
+
+[[replacements]]
+pattern = '>='
+to = '\\geq'
+
+[[replacements]]
+pattern = '!='
+to = '\\neq'
+
+[[replacements]]
+pattern = '\.\.\.'
+to = '\\ldots'
+
+[[replacements]]
+pattern = 'inf'
+to = '\\infty'
+
+[[replacements]]
+pattern = 'alpha'
+to = '\\alpha'
+
+[[replacements]]
+pattern = 'beta'
+to = '\\beta'
+
+[[replacements]]
+pattern = 'gamma'
+to = '\\gamma'
+
+[[replacements]]
+pattern = 'theta'
+to = '\\theta'
+
+[[replacements]]
+pattern = 'lambda'
+to = '\\lambda'
+
+[[replacements]]
+pattern = 'sigma'
+to = '\\sigma'
+
+[[replacements]]
+pattern = 'omega'
+to = '\\omega'
+
+[[replacements]]
+pattern = 'pi'
+to = '\\pi'
+
+[[replacements]]
+pattern = 'AA'
+to = '\\forall'
+
+[[replacements]]
+pattern = 'EE'
+to = '\\exists'

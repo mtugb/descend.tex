@@ -123,12 +123,6 @@ pub struct EnvConfig {
     pub col_separator: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct Replacement {
-    pub from: String,
-    pub to: String,
-}
-
 pub fn parse_to_tree(sample: &str, configs: &HashMap<String, CommandConfig>) -> Result<Node> {
     let mut stack: Vec<(Node, usize)> = vec![(
         Node::Root {
@@ -325,7 +319,11 @@ impl<'a> CommandLatexConverter<'a> {
                 },
                 None => bail!("{} is unknown command type", name),
             },
-            Node::Leaf { content: text, .. } => Ok(text.to_string()),
+            Node::Leaf { content: text, .. } => {
+                let mut text = text.to_string();
+                replace_leaf_mut(&mut text)?;
+                Ok(text)
+            }
         }
     }
     fn format_environment(&self, config: &EnvConfig, children: &[Node]) -> Result<String> {
@@ -449,4 +447,25 @@ pub fn load_command_config(path: Option<&Path>) -> Result<HashMap<String, Comman
         map_extended.insert(name, config);
     }
     Ok(map_extended)
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Replacement {
+    pub pattern: String,
+    pub to: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ReplacementsConfig {
+    pub replacements: Vec<Replacement>,
+}
+
+const DEFAULT_REPLACEMENTS_STR: &str = include_str!("../replacements.toml");
+fn replace_leaf_mut(leaf_str: &mut String) -> Result<()> {
+    let config: ReplacementsConfig = toml::from_str(DEFAULT_REPLACEMENTS_STR)?;
+    for Replacement { pattern, to } in &config.replacements {
+        let regex_pattern = Regex::new(pattern).with_context(|| "invalid pattern regex")?;
+        *leaf_str = regex_pattern.replace_all(leaf_str, to).to_string();
+    }
+    Ok(())
 }
