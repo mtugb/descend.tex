@@ -88,11 +88,7 @@ impl<'a> CommandLatexConverter<'a> {
         Ok(command)
     }
 
-    fn format_wrap(
-        &self,
-        config: &WrapConfig,
-        children: &[Node],
-    ) -> Result<String, RenderError> {
+    fn format_wrap(&self, config: &WrapConfig, children: &[Node]) -> Result<String, RenderError> {
         let body = children
             .iter()
             .map(|child| self.compile_command_into_latex(child))
@@ -169,10 +165,24 @@ pub struct ReplacementsConfig {
 const DEFAULT_REPLACEMENTS_STR: &str = include_str!("../replacements.toml");
 fn replace_leaf_mut(leaf_str: &mut String) -> Result<(), RenderError> {
     let config: ReplacementsConfig =
-        toml::from_str(DEFAULT_REPLACEMENTS_STR).map_err(|e| RenderError::Toml(e))?;
+        toml::from_str(DEFAULT_REPLACEMENTS_STR).map_err(RenderError::Toml)?;
     for Replacement { pattern, to } in &config.replacements {
         let regex_pattern = Regex::new(pattern).map_err(|e| RenderError::Regex { source: e })?;
-        *leaf_str = regex_pattern.replace_all(leaf_str, to).to_string();
+        // Leafの最後の文字がアルファベットならスペースをいれる。
+        // "\times" -> "\times "
+        let effective_to = if to
+            .chars()
+            .last()
+            .map(|c| c.is_alphabetic())
+            .unwrap_or(false)
+        {
+            format!("{} ", to)
+        } else {
+            to.clone()
+        };
+        *leaf_str = regex_pattern
+            .replace_all(leaf_str, effective_to.as_str())
+            .to_string();
     }
     Ok(())
 }

@@ -1,91 +1,91 @@
 [[replacements]]
 pattern = '^\\$'
-to = '\\\\'
+to = '\\'
 
 [[replacements]]
 pattern = '<->'
-to = '\\leftrightarrow'
+to = '\leftrightarrow'
 
 [[replacements]]
 pattern = '=>'
-to = '\\Rightarrow'
+to = '\Rightarrow'
 
 [[replacements]]
 pattern = '->'
-to = '\\rightarrow'
+to = '\rightarrow'
 
 [[replacements]]
 pattern = '<-'
-to = '\\leftarrow'
+to = '\leftarrow'
 
 [[replacements]]
 pattern = '<='
-to = '\\leq'
+to = '\leq'
 
 [[replacements]]
 pattern = '>='
-to = '\\geq'
+to = '\geq'
 
 [[replacements]]
 pattern = '!='
-to = '\\neq'
+to = '\neq'
 
 [[replacements]]
 pattern = '\.\.\.'
-to = '\\ldots'
+to = '\ldots'
 
 [[replacements]]
 pattern = 'inf'
-to = '\\infty'
+to = '\infty'
 
 [[replacements]]
 pattern = 'alpha'
-to = '\\alpha'
+to = '\alpha'
 
 [[replacements]]
 pattern = 'beta'
-to = '\\beta'
+to = '\beta'
 
 [[replacements]]
 pattern = 'gamma'
-to = '\\gamma'
+to = '\gamma'
 
 [[replacements]]
 pattern = 'theta'
-to = '\\theta'
+to = '\theta'
 
 [[replacements]]
 pattern = 'lambda'
-to = '\\lambda'
+to = '\lambda'
 
 [[replacements]]
 pattern = 'sigma'
-to = '\\sigma'
+to = '\sigma'
 
 [[replacements]]
 pattern = 'omega'
-to = '\\omega'
+to = '\omega'
 
 [[replacements]]
 pattern = 'pi'
-to = '\\pi'
+to = '\pi'
 
 [[replacements]]
 pattern = 'AA'
-to = '\\forall'
+to = '\forall'
 
 [[replacements]]
 pattern = 'EE'
-to = '\\exists'
+to = '\exists'
 
 [[replacements]]
 pattern = '\*'
-to = '\\cdot'
+to = '\cdot'
 
 [[replacements]]
 pattern = '\btimes\b'
-to = '\\times'
+to = '\times'
 
 [[replacements]]
 pattern = 'xx'
-to = '\\times'
+to = '\times'
