@@ -40,6 +40,7 @@ pub fn parse_to_tree(
                 CommandConfig::Template(t) => &t.pattern,
                 CommandConfig::Env(e) => &e.pattern,
                 CommandConfig::Regex(r) => &r.pattern,
+                CommandConfig::Wrap(w) => &w.pattern,
             };
             let captures = regex_pattern.captures(&trimed);
             match captures {

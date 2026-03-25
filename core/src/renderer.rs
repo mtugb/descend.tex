@@ -6,7 +6,7 @@ use serde::Deserialize;
 use crate::{
     errors::RenderError,
     models::{
-        config::{CommandConfig, EnvConfig, RegexConfig, TemplateConfig},
+        config::{CommandConfig, EnvConfig, RegexConfig, TemplateConfig, WrapConfig},
         node::Node,
     },
 };
@@ -36,6 +36,7 @@ impl<'a> CommandLatexConverter<'a> {
                     CommandConfig::Template(t) => self.format_template(name, children, t),
                     CommandConfig::Env(c) => self.format_environment(c, children),
                     CommandConfig::Regex(c) => self.format_regex(captures.clone(), c),
+                    CommandConfig::Wrap(c) => self.format_wrap(c, children),
                 },
                 None => Err(RenderError::UnknownCommand(name.clone())),
             },
@@ -85,6 +86,19 @@ impl<'a> CommandLatexConverter<'a> {
         }
         // command.push('\n');
         Ok(command)
+    }
+
+    fn format_wrap(
+        &self,
+        config: &WrapConfig,
+        children: &[Node],
+    ) -> Result<String, RenderError> {
+        let body = children
+            .iter()
+            .map(|child| self.compile_command_into_latex(child))
+            .collect::<Result<Vec<_>, RenderError>>()?
+            .join(&config.row_separator);
+        Ok(format!("{}{}{}", config.prefix, body, config.suffix))
     }
 
     fn format_template(

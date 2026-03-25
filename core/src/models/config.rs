@@ -14,6 +14,9 @@ pub enum CommandConfigRaw {
 
     #[serde(rename = "Environment")]
     Env(EnvConfigRaw),
+
+    #[serde(rename = "Wrap")]
+    Wrap(WrapConfigRaw),
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -28,6 +31,16 @@ pub struct TemplateConfigRaw {
 pub struct RegexConfigRaw {
     pub pattern: String,
     pub template: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct WrapConfigRaw {
+    pub pattern: String,
+    pub prefix: String,
+    pub suffix: String,
+    #[serde(default)]
+    pub row_separator: String,
+    pub alias: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -51,6 +64,7 @@ pub enum CommandConfig {
     Template(TemplateConfig),
     Regex(RegexConfig),
     Env(EnvConfig),
+    Wrap(WrapConfig),
 }
 
 #[derive(Debug, Clone)]
@@ -65,6 +79,15 @@ pub struct TemplateConfig {
 pub struct RegexConfig {
     pub pattern: Regex,
     pub template: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct WrapConfig {
+    pub pattern: Regex,
+    pub prefix: String,
+    pub suffix: String,
+    pub row_separator: String,
+    pub alias: Vec<Regex>,
 }
 
 #[derive(Debug, Clone)]
@@ -94,6 +117,15 @@ impl CommandConfigRaw {
             CommandConfigRaw::Regex(c) => Ok(CommandConfig::Regex(RegexConfig {
                 pattern: compile_regex(&c.pattern, &format!("{}.pattern", name))?,
                 template: c.template,
+            })),
+            CommandConfigRaw::Wrap(c) => Ok(CommandConfig::Wrap(WrapConfig {
+                pattern: compile_regex(&c.pattern, &format!("{}.pattern", name))?,
+                prefix: c.prefix,
+                suffix: c.suffix,
+                row_separator: c.row_separator,
+                alias: compile_regex_all(c.alias.unwrap_or_default(), |i| {
+                    format!("{}.alias[{}]", name, i)
+                })?,
             })),
             CommandConfigRaw::Env(c) => Ok(CommandConfig::Env(EnvConfig {
                 pattern: compile_regex(&c.pattern, &format!("{}.pattern", name))?,

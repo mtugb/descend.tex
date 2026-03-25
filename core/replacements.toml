@@ -1,4 +1,8 @@
 [[replacements]]
+pattern = '^\\$'
+to = '\\\\'
+
+[[replacements]]
 pattern = '<->'
 to = '\\leftrightarrow'
 

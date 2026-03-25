@@ -4,7 +4,7 @@ use regex::Regex;
 
 use crate::{
     errors::ConfigError,
-    models::config::{CommandConfig, CommandConfigRaw, EnvConfig, TemplateConfig},
+    models::config::{CommandConfig, CommandConfigRaw, EnvConfig, TemplateConfig, WrapConfig},
 };
 
 const DEFAULT_CONFIG_STR: &str = include_str!("../commands.toml");
@@ -36,6 +36,7 @@ pub fn load_command_config(
         let aliases: &Vec<Regex> = match &config {
             CommandConfig::Template(t) => &t.alias,
             CommandConfig::Env(e) => &e.alias,
+            CommandConfig::Wrap(w) => &w.alias,
             CommandConfig::Regex(_) => &Vec::new(),
         };
         for (i, alias) in aliases.iter().enumerate() {
@@ -47,6 +48,10 @@ pub fn load_command_config(
                 CommandConfig::Env(e) => CommandConfig::Env(EnvConfig {
                     pattern: alias.clone(),
                     ..e.clone()
+                }),
+                CommandConfig::Wrap(w) => CommandConfig::Wrap(WrapConfig {
+                    pattern: alias.clone(),
+                    ..w.clone()
                 }),
                 CommandConfig::Regex(_) => unreachable!(),
             };

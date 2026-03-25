@@ -118,11 +118,12 @@ row_separator = '\item '
 # Structure
 [inline_math]
 pattern = '\$'
-type = "Environment"
-env_name = "align*"
+type = "Wrap"
+prefix = '$'
+suffix = '$'
 
 [display_math]
 pattern = '\$\$'
-type = "Environment"
-env_name = "align*"
-row_separator = '\\'
+type = "Wrap"
+prefix = '\begin{align*}'
+suffix = '\end{align*}'
