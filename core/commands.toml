@@ -24,12 +24,14 @@ type = "Environment"
 env_name = "vmatrix"
 alias = ['\|m\|']
 row_separator = '\\'
+col_separator = '&'
 [tmat]
 pattern = 'mat\^t'
 type = 'Environment'
 env_name = 'bmatrix'
 alias = ['m\^t']
 row_separator = '\\'
+col_separator = '&'
 output_suffix = '^{\top}'
 
 [lim]

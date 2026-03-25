@@ -77,3 +77,15 @@ to = '\\forall'
 [[replacements]]
 pattern = 'EE'
 to = '\\exists'
+
+[[replacements]]
+pattern = '\*'
+to = '\\cdot'
+
+[[replacements]]
+pattern = '\btimes\b'
+to = '\\times'
+
+[[replacements]]
+pattern = 'xx'
+to = '\\times'
