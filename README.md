@@ -20,6 +20,8 @@ Spread block structures into a single LaTeX string.
 
 Parse or validate inline LaTeX. That's your compiler's job.
 
+![Basic flow](https://github.com/user-attachments/assets/64160714-4705-4e3f-a229-acaf07871e97)
+
 ---
 
 ## Why
