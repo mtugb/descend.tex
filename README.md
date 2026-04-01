@@ -1,5 +1,8 @@
 # descend.tex
 
+> [!NOTE]
+> I welcome any Pull Requests, as this is still pre-mature and not stable project.
+
 > LaTeX is just a flat-earther. We taught it a new axis.
 
 This is not a new language, but a new way to write the LaTeX you are used to.
