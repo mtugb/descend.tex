@@ -1,0 +1,39 @@
+# This is human-friendly-tex example.
+## Matrix
+$
+ |mat|
+  a b
+  c d
+ = a*d - b*c
+## hello
+$$
+ (x-2)^2+(y+1)^2 
+ &= x^2-4x+4+(y+1)^2 \
+ &= x^2-4x+4+y^2+2y+1 \
+ &= x^2-4x+y^2+2y+5 
+$$
+ f(x)=
+ nsqrt
+  3
+  x^2+3
+$$
+ x=
+ frac
+  -b \pm \sqrt{b^2-4ac}
+  2a
+$$
+ S=
+ sum
+  i=1
+  n
+  i^2+2i \
+ &=sum
+$$
+ frac
+  ||
+   1+
+   frac
+    1
+    2
+  3
+  

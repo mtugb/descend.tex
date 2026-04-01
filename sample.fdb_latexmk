@@ -1,0 +1,39 @@
+# Fdb version 4
+["dvipdf"] 1774948553.72551 "sample.dvi" "sample.pdf" "sample" 1774948553.88537 0
+  "sample.dvi" 1774948553.70272 1536 6873c5801ceb387833f18797ef63ede9 "latex"
+  (generated)
+  "sample.pdf"
+  (rewritten before read)
+["latex"] 1774948553.47878 "sample.tex" "sample.dvi" "sample" 1774948553.88477 0
+  "/etc/texmf/web2c/texmf.cnf" 1774794169.52453 475 c0e671620eb5563b2130f56340a5fde8 ""
+  "/usr/share/texlive/texmf-dist/fonts/tfm/ptex-fonts/standard/goth10.tfm" 1463434352 1196 5981e79c37b2cfd27b3612a6783cd4b6 ""
+  "/usr/share/texlive/texmf-dist/fonts/tfm/ptex-fonts/standard/min10.tfm" 1463434352 1196 1be730212205a270378fba11a44765dc ""
+  "/usr/share/texlive/texmf-dist/fonts/tfm/ptex-fonts/standard/tgoth10.tfm" 1463434352 856 7404843a5f798859944d7973a47821d5 ""
+  "/usr/share/texlive/texmf-dist/fonts/tfm/ptex-fonts/standard/tmin10.tfm" 1463434352 856 39c171483fe1bb7d0e1368980c0c205b ""
+  "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
+  "/usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm" 1136768653 1324 c910af8c371558dc20f2d7822f66fe64 ""
+  "/usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmr12.tfm" 1136768653 1288 655e228510b4c2a1abe905c368440826 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty" 1686341992 2222 499d61426192c39efd8f410ee1a52b9c ""
+  "/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty" 1686341992 4173 82ac04dfb1256038fad068287fbb4fe6 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty" 1686341992 88371 d84032c0f422c3d1e282266c01bef237 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty" 1686341992 4474 b811654f4bf125f11506d13d13647efb ""
+  "/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty" 1686341992 2444 0d0c1ee65478277e8015d65b86983da2 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/article.cls" 1705352648 20144 147463a6a579f4597269ef9565205cfe ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/size10.clo" 1705352648 8448 dbc0dbf4156c0bb9ba01a1c685d3bad0 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/graphics.cfg" 1465944070 1224 978390e9c2234eab29404bc21b268d1e ""
+  "/usr/share/texlive/texmf-dist/tex/latex/graphics-def/dvips.def" 1663965824 6282 3d1fff8973f8803fd81ea577dda4f3ef ""
+  "/usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty" 1654720880 18387 8f900a490197ebaf93c02ae9476d4b09 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty" 1654720880 8010 a8d949cbdbc5c983593827c9eec252e1 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty" 1654720880 2671 7e67d78d9b88c845599a85b2d41f2e39 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/graphics/trig.sty" 1654720880 4023 293ea1c16429fc0c4cf605f4da1791a9 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-dvips.def" 1704491087 35584 af40d1a4049cb0a7cc2b70833befa00b ""
+  "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
+  "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
+  "/var/lib/texmf/web2c/euptex/platex.fmt" 1774794214 6935560 bb90b2feb9501b651fd2da9c96e832c5 ""
+  "sample.aux" 1774948553.70272 352 c0b1e1ec273ad026269c2c4e44e01414 "latex"
+  "sample.tex" 1774948553.36617 557 7cd17a0607fabb8a32c6653e134812fa ""
+  (generated)
+  "sample.aux"
+  "sample.dvi"
+  "sample.log"
+  (rewritten before read)

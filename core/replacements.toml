@@ -1,6 +1,7 @@
 [[replacements]]
-pattern = '^\\$'
-to = '\\'
+# \ (行末) -> \\
+pattern = '\\$'
+to = '\\\\'
 
 [[replacements]]
 pattern = '<->'
@@ -35,50 +36,6 @@ pattern = '\.\.\.'
 to = '\ldots'
 
 [[replacements]]
-pattern = 'inf'
-to = '\infty'
-
-[[replacements]]
-pattern = 'alpha'
-to = '\alpha'
-
-[[replacements]]
-pattern = 'beta'
-to = '\beta'
-
-[[replacements]]
-pattern = 'gamma'
-to = '\gamma'
-
-[[replacements]]
-pattern = 'theta'
-to = '\theta'
-
-[[replacements]]
-pattern = 'lambda'
-to = '\lambda'
-
-[[replacements]]
-pattern = 'sigma'
-to = '\sigma'
-
-[[replacements]]
-pattern = 'omega'
-to = '\omega'
-
-[[replacements]]
-pattern = 'pi'
-to = '\pi'
-
-[[replacements]]
-pattern = 'AA'
-to = '\forall'
-
-[[replacements]]
-pattern = 'EE'
-to = '\exists'
-
-[[replacements]]
 pattern = '\*'
 to = '\cdot'
 
@@ -87,5 +44,5 @@ pattern = '\btimes\b'
 to = '\times'
 
 [[replacements]]
-pattern = 'xx'
+pattern = '><'
 to = '\times'

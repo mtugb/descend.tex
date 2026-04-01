@@ -1,9 +1,8 @@
 [package]
-name = "cli"
+name = "core-test"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.102"
 mytex = { path = "../core" }
-anyhow = "1.0"
-clap = { version = "4", features = ["derive"] }

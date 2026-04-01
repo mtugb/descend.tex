@@ -129,3 +129,11 @@ pattern = '\$\$'
 type = "Wrap"
 prefix = '\begin{align*}'
 suffix = '\end{align*}'
+
+# join vertical elem in horizontal direction.
+[flatten]
+pattern = '\|\|'
+type = "Wrap"
+prefix = ''
+suffix = ''
+

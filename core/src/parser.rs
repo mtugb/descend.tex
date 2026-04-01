@@ -11,20 +11,20 @@ pub fn parse_to_tree(
     sample: &str,
     configs: &HashMap<String, CommandConfig>,
 ) -> Result<Node, ParseError> {
-    let mut stack: Vec<(Node, usize)> = vec![(
+    let mut stack: Vec<(Node, i32)> = vec![(
         Node::Root {
             children: Vec::new(),
             line_num: 0,
         },
-        0,
+        -1,
     )];
     for (i, line) in sample.lines().enumerate() {
         if is_empty_line(line) {
             continue;
         }
         let trimed = line.trim().to_string();
-        let last_indent: usize = stack.last().unwrap().1;
-        let current_indent = get_indent(line);
+        let last_indent: i32 = stack.last().unwrap().1;
+        let current_indent = get_indent(line) as i32;
         let indent_comparison = current_indent.cmp(&last_indent);
         match indent_comparison {
             Ordering::Greater | Ordering::Equal => {}
@@ -94,14 +94,14 @@ pub fn parse_to_tree(
         }
     }
 
-    fold_stack(&mut stack, 0)?;
+    fold_stack(&mut stack, -1)?;
 
     let root = stack.first().unwrap();
     Ok(root.clone().0)
 }
 
-fn fold_stack(stack: &mut Vec<(Node, usize)>, into: usize) -> Result<(), ParseError> {
-    let mut wait: Vec<(Node, usize)> = Vec::new();
+fn fold_stack(stack: &mut Vec<(Node, i32)>, into: i32) -> Result<(), ParseError> {
+    let mut wait: Vec<(Node, i32)> = Vec::new();
 
     while stack
         .last()
@@ -115,11 +115,11 @@ fn fold_stack(stack: &mut Vec<(Node, usize)>, into: usize) -> Result<(), ParseEr
     {
         // popped がstack自体を奪うわけではないので引き続きstackは参照可能。
         let popped = stack.pop().unwrap();
-        // usizeはCopyトレイトを持つので、今後もpoppedへのアクセスは可能
+        // i32はCopyトレイトを持つので、今後もpoppedへのアクセスは可能
         let popped_indent = popped.1;
         // stackの最後の要素の可変参照を得る。「以降Stackの直接参照は不可能」
         let top = stack.last_mut().unwrap();
-        // usizeはCopyトレイトを持つので、今後もtopへのアクセスは可能
+        // i32はCopyトレイトを持つので、今後もtopへのアクセスは可能
         let top_indent = top.1;
         // waitに中身を完全に渡したのでここ以下でpoppedの参照は不可.
         wait.push(popped);
