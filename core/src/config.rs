@@ -77,7 +77,7 @@ pub fn load_replacements_config(path: Option<&Path>) -> Result<ReplacementsConfi
                     .to_string(),
             )
         })?,
-        None => "[replacements]".to_string(), // return empty
+        None => "replacements=[]".to_string(), // return empty
     };
     let config: ReplacementsConfig =
         toml::from_str(&replacements_raw).map_err(ConfigError::Toml)?;
