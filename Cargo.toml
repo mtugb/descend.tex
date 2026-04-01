@@ -1,3 +1,3 @@
 [workspace]
-members = ["cli","core","core-test"]
+members = ["cli","core","core-test", "lsp"]
 resolver = "3"
