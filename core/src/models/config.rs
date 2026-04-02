@@ -25,6 +25,8 @@ pub struct TemplateConfigRaw {
     pub template: String,
     pub args_count: usize,
     pub alias: Option<Vec<String>>,
+    pub completion_label: Option<String>,
+    pub completion_template: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -41,6 +43,8 @@ pub struct WrapConfigRaw {
     #[serde(default)]
     pub row_separator: String,
     pub alias: Option<Vec<String>>,
+    pub completion_label: Option<String>,
+    pub completion_template: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -56,6 +60,8 @@ pub struct EnvConfigRaw {
     pub row_separator: String,
     #[serde(default)] // 何もなければString::new()つまり""が入る
     pub col_separator: String,
+    pub completion_label: Option<String>,
+    pub completion_template: Option<String>,
 }
 
 // Command_config_Validated
@@ -73,6 +79,8 @@ pub struct TemplateConfig {
     pub template: String,
     pub args_count: usize,
     pub alias: Vec<Regex>,
+    pub completion_label: Option<String>,
+    pub completion_template: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -88,6 +96,8 @@ pub struct WrapConfig {
     pub suffix: String,
     pub row_separator: String,
     pub alias: Vec<Regex>,
+    pub completion_label: Option<String>,
+    pub completion_template: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -101,6 +111,8 @@ pub struct EnvConfig {
     pub alias: Vec<Regex>,
     pub row_separator: String,
     pub col_separator: String,
+    pub completion_label: Option<String>,
+    pub completion_template: Option<String>,
 }
 
 impl CommandConfigRaw {
@@ -113,6 +125,8 @@ impl CommandConfigRaw {
                 alias: compile_regex_all(c.alias.unwrap_or_default(), |i| {
                     format!("{}.alias[{}]", name, i)
                 })?,
+                completion_label: c.completion_label,
+                completion_template: c.completion_template,
             })),
             CommandConfigRaw::Regex(c) => Ok(CommandConfig::Regex(RegexConfig {
                 pattern: compile_regex(&c.pattern, &format!("{}.pattern", name))?,
@@ -126,6 +140,8 @@ impl CommandConfigRaw {
                 alias: compile_regex_all(c.alias.unwrap_or_default(), |i| {
                     format!("{}.alias[{}]", name, i)
                 })?,
+                completion_label: c.completion_label,
+                completion_template: c.completion_template,
             })),
             CommandConfigRaw::Env(c) => Ok(CommandConfig::Env(EnvConfig {
                 pattern: compile_regex(&c.pattern, &format!("{}.pattern", name))?,
@@ -139,6 +155,8 @@ impl CommandConfigRaw {
                 })?,
                 row_separator: c.row_separator,
                 col_separator: c.col_separator,
+                completion_label: c.completion_label,
+                completion_template: c.completion_template,
             })),
         }
     }

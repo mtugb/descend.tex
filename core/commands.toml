@@ -10,6 +10,7 @@ template = '\frac{$0}{$1}'
 args_count = 2
 ## escapement(for Regex) required
 alias = ["f"]
+completion_label = 'frac'
 
 [mat]
 pattern = 'mat'
@@ -18,6 +19,9 @@ env_name = 'bmatrix'
 alias = ['m']
 row_separator = '\\'
 col_separator = '&'
+completion_label = 'mat'
+completion_template = "mat\n    $1 & $2 \\\\\n    $3 & $4"
+
 [vmat]
 pattern = '\|mat\|'
 type = "Environment"
@@ -25,6 +29,9 @@ env_name = "vmatrix"
 alias = ['\|m\|']
 row_separator = '\\'
 col_separator = '&'
+completion_label = '|mat|'
+completion_template = "|mat|\n    $1 & $2 \\\\\n    $3 & $4"
+
 [tmat]
 pattern = 'mat\^t'
 type = 'Environment'
@@ -33,12 +40,15 @@ alias = ['m\^t']
 row_separator = '\\'
 col_separator = '&'
 output_suffix = '^{\top}'
+completion_label = 'mat^t'
+completion_template = "mat^t\n    $1 & $2 \\\\\n    $3 & $4"
 
 [lim]
 pattern = 'lim'
 type = 'Template'
 template = '\lim_{$0 \to $1} $2'
 args_count = 2
+completion_label = 'lim'
 
 [integral]
 pattern = 'int'
@@ -46,54 +56,63 @@ type = 'Template'
 template = '\int_{$0}^{$1} $2 \, d$3'
 args_count = 4
 alias = ['integral']
+completion_label = 'int'
 
 [sum]
 pattern = 'sum'
 type = 'Template'
 template = '\sum_{$0}^{$1} $2'
 args_count = 3
+completion_label = 'sum'
 
 [prod]
 pattern = 'prod'
 type = 'Template'
 template = '\prod_{$0}^{$1} $2'
 args_count = 3
+completion_label = 'prod'
 
 [sqrt]
 pattern = 'sqrt'
 type = 'Template'
 template = '\sqrt{$0}'
 args_count = 1
+completion_label = 'sqrt'
 
 [nsqrt]
 pattern = 'nsqrt'
 type = 'Template'
 template = '\sqrt[$0]{$1}'
 args_count = 2
+completion_label = 'nsqrt'
 
 [abs]
 pattern = 'abs'
 type = 'Template'
 template = '\left|$0\right|'
 args_count = 1
+completion_label = 'abs'
 
 [norm]
 pattern = 'norm'
 type = 'Template'
 template = '\left\|$0\right\|'
 args_count = 1
+completion_label = 'norm'
 
 [ceil]
 pattern = 'ceil'
 type = 'Template'
 template = '\left\lceil$0\right\rceil'
 args_count = 1
+completion_label = 'ceil'
 
 [floor]
 pattern = 'floor'
 type = 'Template'
 template = '\left\lfloor$0\right\rfloor'
 args_count = 1
+completion_label = 'floor'
 
 # Document
 [h1]
@@ -116,6 +135,8 @@ pattern = "itemize"
 type = "Environment"
 env_name = "itemize"
 row_separator = '\item '
+completion_label = 'itemize'
+completion_template = "itemize\n    $1\n    $2"
 
 # Structure
 [inline_math]
@@ -123,12 +144,16 @@ pattern = '\$'
 type = "Wrap"
 prefix = '$'
 suffix = '$'
+completion_label = '$'
+completion_template = "$\n    $1"
 
 [display_math]
 pattern = '\$\$'
 type = "Wrap"
 prefix = '\begin{align*}'
 suffix = '\end{align*}'
+completion_label = '$$'
+completion_template = "$$\n    $1"
 
 # join vertical elem in horizontal direction.
 [flatten]
@@ -136,4 +161,5 @@ pattern = '\|\|'
 type = "Wrap"
 prefix = ''
 suffix = ''
-
+completion_label = '||'
+completion_template = "||\n    $1"

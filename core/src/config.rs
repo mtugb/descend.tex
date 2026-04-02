@@ -46,14 +46,20 @@ pub fn load_command_config(
             let aliased_config = match &config {
                 CommandConfig::Template(t) => CommandConfig::Template(TemplateConfig {
                     pattern: alias.clone(),
+                    completion_label: None,
+                    completion_template: None,
                     ..t.clone()
                 }),
                 CommandConfig::Env(e) => CommandConfig::Env(EnvConfig {
                     pattern: alias.clone(),
+                    completion_label: None,
+                    completion_template: None,
                     ..e.clone()
                 }),
                 CommandConfig::Wrap(w) => CommandConfig::Wrap(WrapConfig {
                     pattern: alias.clone(),
+                    completion_label: None,
+                    completion_template: None,
                     ..w.clone()
                 }),
                 CommandConfig::Regex(_) => unreachable!(),

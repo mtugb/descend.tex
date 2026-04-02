@@ -4,7 +4,7 @@ use std::sync::Arc;
 use mytex::config::load_command_config;
 use mytex::errors::ParseErrorKind;
 use mytex::lsp_tree_checker::check_tree;
-use mytex::models::config::CommandConfig;
+use mytex::models::config::{CommandConfig, TemplateConfig};
 use mytex::parser::parse_to_tree;
 use tokio::sync::Mutex;
 use tower_lsp::jsonrpc::Result;
@@ -76,17 +76,45 @@ impl LanguageServer for Backend {
         let caret_pos = p.text_document_position.position;
         let mut completions: Vec<CompletionItem> = Vec::new();
         // add commands list
-        completions.extend(
-            self.parser_command_config
-                .keys()
-                .map(|key| CompletionItem {
-                    label: key.clone(),
-                    kind: Some(CompletionItemKind::FUNCTION),
-                    insert_text: Some(key.clone()),
+        // completions.extend(
+        //     self.parser_command_config
+        //         .values()
+        //         .map(|value| CompletionItem {
+        //             label: key.clone(),
+        //             kind: Some(CompletionItemKind::FUNCTION),
+        //             insert_text: Some(key.clone()),
+        //             ..Default::default()
+        //         })
+        //         .collect::<Vec<_>>(),
+        // );
+        //
+        //スニペット追加
+        for config in self.parser_command_config.values() {
+            if let CommandConfig::Template(TemplateConfig {
+                args_count,
+                completion_label: Some(label),
+                completion_template,
+                ..
+            }) = config
+            {
+                let insert_text = match completion_template {
+                    Some(template) => template.to_string(),
+                    None => {
+                        let snippet = (1..*args_count)
+                            .map(|i| format!("\n    ${}", i))
+                            .collect::<String>();
+                        format!("{}{}", label, snippet)
+                    }
+                };
+                completions.push(CompletionItem {
+                    label: label.to_string(),
+                    kind: Some(CompletionItemKind::SNIPPET),
+                    insert_text: Some(insert_text),
+                    insert_text_format: Some(InsertTextFormat::SNIPPET),
                     ..Default::default()
-                })
-                .collect::<Vec<_>>(),
-        );
+                });
+            }
+        }
         // useful snips
         completions.push(CompletionItem {
             label: "frac".to_string(),
