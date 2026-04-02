@@ -1,19 +1,22 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use mytex::config::load_command_config;
 use mytex::errors::ParseErrorKind;
 use mytex::lsp_tree_checker::check_tree;
 use mytex::models::config::CommandConfig;
 use mytex::parser::parse_to_tree;
+use tokio::sync::Mutex;
 use tower_lsp::jsonrpc::Result;
-use tower_lsp::lsp_types::*;
-use tower_lsp::{Client, LanguageServer, LspService, Server};
+use tower_lsp::{Client, LspService, Server};
+use tower_lsp::{LanguageServer, lsp_types::*};
 
 #[derive(Debug)]
 struct Backend {
     client: Client,
     parser_command_config: HashMap<String, CommandConfig>,
     indent_unit: Option<usize>,
+    open_documents: Arc<Mutex<HashMap<Url, String>>>,
 }
 
 #[tower_lsp::async_trait]
@@ -24,6 +27,7 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
                 )),
+                completion_provider: Some(CompletionOptions::default()),
                 ..Default::default()
             },
             //のちにenv!("CARGO_PKG_VERSION")
@@ -41,7 +45,48 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, p: DidOpenTextDocumentParams) {
-        let parse_res = parse_to_tree(&p.text_document.text, &self.parser_command_config, None);
+        let mut documents = self.open_documents.lock().await;
+        // insertでドキュメントの中身を更新
+        documents.insert(p.text_document.uri.clone(), p.text_document.text.clone());
+        drop(documents); //この次のdiagnoseでself.documentsにアクセスできるようロック解除(これが無ければこの関数の終わりまでロック保持されるのでdiagnoseで使えない)
+        self.diagnose(p.text_document.text, p.text_document.uri)
+            .await;
+    }
+
+    async fn did_change(&self, p: DidChangeTextDocumentParams) {
+        // did_saveではテキストドキュメントにアクセスできないのでここでフィールドを更新しておく
+        let mut documents = self.open_documents.lock().await;
+        documents.insert(
+            p.text_document.uri.clone(),
+            p.content_changes[0].text.clone(),
+        );
+        drop(documents); //一応無くてもいいけど今後この次の行になんかかくかもしれんから
+    }
+
+    async fn did_save(&self, p: DidSaveTextDocumentParams) {
+        let text = self.open_documents.lock().await;
+        let text = text
+            .get(&p.text_document.uri)
+            .expect("ドキュメントの一時データへのアクセスに失敗しました。想定外のエラーです。");
+
+        self.diagnose((*text).to_owned(), p.text_document.uri).await;
+    }
+
+    async fn completion(&self, _: CompletionParams) -> Result<Option<CompletionResponse>> {
+        Ok(Some(CompletionResponse::Array(vec![
+            CompletionItem::new_simple("Hello".to_string(), "Some detail".to_string()),
+            CompletionItem::new_simple("Bye".to_string(), "More detail".to_string()),
+        ])))
+    }
+
+    async fn shutdown(&self) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl Backend {
+    async fn diagnose(&self, body: String, uri: Url) {
+        let parse_res = parse_to_tree(&body, &self.parser_command_config, None);
         //デバッグ
         self.client
             .log_message(MessageType::INFO, format!("parse_res: {:?}", parse_res))
@@ -54,6 +99,7 @@ impl LanguageServer for Backend {
                         self.client
                             .log_message(MessageType::INFO, "Completed!")
                             .await;
+                        self.clear_diagnose(uri).await;
                     }
                     Err(e) => {
                         let diagnostic = Diagnostic::new(
@@ -75,11 +121,7 @@ impl LanguageServer for Backend {
                             None,
                         );
                         self.client
-                            .publish_diagnostics(
-                                p.text_document.uri.clone(),
-                                vec![diagnostic],
-                                None,
-                            )
+                            .publish_diagnostics(uri, vec![diagnostic], None)
                             .await;
                     }
                 }
@@ -108,14 +150,13 @@ impl LanguageServer for Backend {
                     None,
                 );
                 self.client
-                    .publish_diagnostics(p.text_document.uri, vec![diagnostic], None)
+                    .publish_diagnostics(uri, vec![diagnostic], None)
                     .await;
             }
         }
     }
-
-    async fn shutdown(&self) -> Result<()> {
-        Ok(())
+    async fn clear_diagnose(&self, uri: Url) {
+        self.client.publish_diagnostics(uri, vec![], None).await;
     }
 }
 
@@ -128,6 +169,7 @@ async fn main() {
         client,
         parser_command_config: load_command_config(None).expect("404"),
         indent_unit: None,
+        open_documents: Arc::new(Mutex::new(HashMap::new())),
     });
     Server::new(stdin, stdout, socket).serve(service).await;
 }
