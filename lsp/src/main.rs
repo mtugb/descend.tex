@@ -72,11 +72,37 @@ impl LanguageServer for Backend {
         self.diagnose((*text).to_owned(), p.text_document.uri).await;
     }
 
-    async fn completion(&self, _: CompletionParams) -> Result<Option<CompletionResponse>> {
-        Ok(Some(CompletionResponse::Array(vec![
-            CompletionItem::new_simple("Hello".to_string(), "Some detail".to_string()),
-            CompletionItem::new_simple("Bye".to_string(), "More detail".to_string()),
-        ])))
+    async fn completion(&self, p: CompletionParams) -> Result<Option<CompletionResponse>> {
+        let caret_pos = p.text_document_position.position;
+        let mut completions: Vec<CompletionItem> = Vec::new();
+        // add commands list
+        completions.extend(
+            self.parser_command_config
+                .keys()
+                .map(|key| CompletionItem {
+                    label: key.clone(),
+                    kind: Some(CompletionItemKind::FUNCTION),
+                    insert_text: Some(key.clone()),
+                    ..Default::default()
+                })
+                .collect::<Vec<_>>(),
+        );
+        // useful snips
+        completions.push(CompletionItem {
+            label: "frac".to_string(),
+            kind: Some(CompletionItemKind::SNIPPET),
+            insert_text: Some("frac\n    $1\n    $2".to_string()),
+            insert_text_format: Some(InsertTextFormat::SNIPPET),
+            ..Default::default()
+        });
+        completions.push(CompletionItem {
+            label: "matrix2".to_string(),
+            kind: Some(CompletionItemKind::SNIPPET),
+            insert_text: Some("mat\n    $1  $2\n    $3  $4".to_string()),
+            insert_text_format: Some(InsertTextFormat::SNIPPET),
+            ..Default::default()
+        });
+        Ok(Some(CompletionResponse::Array(completions)))
     }
 
     async fn shutdown(&self) -> Result<()> {
