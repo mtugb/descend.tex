@@ -64,7 +64,7 @@ fn compile_dtex_into_latex(
     let command_configs = load_command_config(commands_config_path.as_deref())?;
     let replacements_config = load_replacements_config(replacements_config_path.as_deref())?;
     let converter = TreeLatexConverter::new(&command_configs, replacements_config)?;
-    let root = parse_to_tree(input_str, &command_configs)?;
+    let root = parse_to_tree(input_str, &command_configs, None)?;
     // {{, }} は{, }のformatでのエスケープ
     let latex = format!(
         r"

@@ -1,8 +1,8 @@
 #[derive(thiserror::Error, Debug)]
-#[error("Error at line {line}, col {col}: {kind}")]
+#[error("Error at line {line}, character {character}: {kind}")]
 pub struct ParseError {
     pub line: usize,
-    pub col: usize,
+    pub character: usize,
     pub kind: ParseErrorKind, // さっき定義した Enum をここに入れる
 }
 
@@ -10,6 +10,9 @@ pub struct ParseError {
 pub enum ParseErrorKind {
     #[error("Indentation mismatch: expected {expected}, found {found}")]
     Indent { expected: usize, found: usize },
+
+    #[error("Invalid indent width: {found} is not a multiple of {indent_unit}")]
+    InvalidIndentWidth { found: usize, indent_unit: usize },
 
     #[error("Internal stack error: {0}")]
     Stack(String), // fold_stackからのエラーメッセージなどを入れる
@@ -71,4 +74,23 @@ pub enum RenderError {
     Regex { source: regex::Error },
     #[error("Unknown command type: {0}")]
     UnknownCommand(String),
+}
+
+pub struct LintError {
+    pub line: usize,
+    pub character: usize,
+    pub kind: LintErrorKind,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum LintErrorKind {
+    #[error("Arguments for \"{command}\" count mismatch: expected {expected}, found {found}")]
+    MismatchArguments {
+        command: String,
+        expected: usize,
+        found: usize,
+    },
+    #[error("Unknown command: {0}")]
+    UnknownCommand(String),
+    // 他に必要なものがあれば
 }

@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 tokio = { version = "1.50.0", features = ["full"] }
 tower-lsp = "0.20.0"
+mytex = { path = "../core" }

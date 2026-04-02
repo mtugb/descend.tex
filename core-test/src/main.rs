@@ -18,6 +18,7 @@ fn main() -> anyhow::Result<()> {
          = a*d - b*c
         ",
         &command_configs,
+        None,
     )?;
 
     let converter = TreeLatexConverter::new(&command_configs, replacements_config)?;

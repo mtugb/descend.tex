@@ -7,6 +7,7 @@ pub enum Node {
     Root {
         children: Vec<Node>,
         line_num: usize,
+        indent: i32,
     },
 
     /// 特定のコマンド（mat, sumなど）
@@ -16,10 +17,15 @@ pub enum Node {
         captures: Option<Vec<String>>,
         children: Vec<Node>, // 子要素もNodeなので再帰的
         line_num: usize,
+        indent: i32,
     },
 
     /// 最小単位（x + y など、これ以上分解しない文字列）
-    Leaf { content: String, line_num: usize },
+    Leaf {
+        content: String,
+        line_num: usize,
+        indent: i32,
+    },
 }
 impl Node {
     pub fn command(
@@ -27,6 +33,7 @@ impl Node {
         config_key: String,
         captures: Option<Vec<String>>,
         line_num: usize,
+        indent: i32,
     ) -> Node {
         Node::Command {
             name,
@@ -34,6 +41,7 @@ impl Node {
             captures,
             children: Vec::new(),
             line_num,
+            indent,
         }
     }
 }

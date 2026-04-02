@@ -10,11 +10,14 @@ use crate::{
 pub fn parse_to_tree(
     sample: &str,
     configs: &HashMap<String, CommandConfig>,
+    indent_unit: Option<usize>,
 ) -> Result<Node, ParseError> {
+    let indent_unit = indent_unit.unwrap_or(4);
     let mut stack: Vec<(Node, i32)> = vec![(
         Node::Root {
             children: Vec::new(),
             line_num: 0,
+            indent: -1,
         },
         -1,
     )];
@@ -25,11 +28,21 @@ pub fn parse_to_tree(
         let trimed = line.trim().to_string();
         let last_indent: i32 = stack.last().unwrap().1;
         let current_indent = get_indent(line) as i32;
+        if current_indent % indent_unit as i32 != 0 {
+            return Err(ParseError {
+                line: i,
+                character: current_indent as usize * indent_unit,
+                kind: ParseErrorKind::InvalidIndentWidth {
+                    found: i,
+                    indent_unit,
+                },
+            });
+        }
         let indent_comparison = current_indent.cmp(&last_indent);
         match indent_comparison {
             Ordering::Greater | Ordering::Equal => {}
             Ordering::Less => {
-                fold_stack(&mut stack, current_indent)?;
+                fold_stack(&mut stack, current_indent, indent_unit)?;
             }
         }
 
@@ -57,7 +70,13 @@ pub fn parse_to_tree(
                             // 空文字にマッチした場合も含む。
                             is_command = true;
                             stack.push((
-                                Node::command(trimed.clone(), key.clone(), Some(c), i),
+                                Node::command(
+                                    trimed.clone(),
+                                    key.clone(),
+                                    Some(c),
+                                    i,
+                                    current_indent,
+                                ),
                                 current_indent,
                             ));
                             break;
@@ -67,8 +86,8 @@ pub fn parse_to_tree(
                             // 実際に省略された。
 
                             return Err(ParseError {
-                                line: 404,
-                                col: 100,
+                                line: i,
+                                character: current_indent as usize * indent_unit,
                                 kind: ParseErrorKind::DangerousCaptureGroups {
                                     field_name: key.clone(),
                                 },
@@ -88,26 +107,27 @@ pub fn parse_to_tree(
                 Node::Leaf {
                     content: trimed,
                     line_num: i,
+                    indent: current_indent,
                 },
                 current_indent,
             ));
         }
     }
 
-    fold_stack(&mut stack, -1)?;
+    fold_stack(&mut stack, -1, indent_unit)?;
 
     let root = stack.first().unwrap();
     Ok(root.clone().0)
 }
 
-fn fold_stack(stack: &mut Vec<(Node, i32)>, into: i32) -> Result<(), ParseError> {
+fn fold_stack(stack: &mut Vec<(Node, i32)>, into: i32, indent_unit: usize) -> Result<(), ParseError> {
     let mut wait: Vec<(Node, i32)> = Vec::new();
 
     while stack
         .last()
         .ok_or(ParseError {
             line: 0,
-            col: 0,
+            character: 0,
             kind: ParseErrorKind::EmptyStackForFoldStack,
         })?
         .1
@@ -132,10 +152,14 @@ fn fold_stack(stack: &mut Vec<(Node, i32)>, into: i32) -> Result<(), ParseError>
                         children.push(wait.pop().unwrap().0);
                     }
                 }
-                Node::Leaf { content, line_num } => {
+                Node::Leaf {
+                    content,
+                    line_num,
+                    indent,
+                } => {
                     return Err(ParseError {
                         line: *line_num,
-                        col: 0,
+                        character: *indent as usize * indent_unit,
                         kind: ParseErrorKind::LeafHavingChildren(content.clone()),
                     });
                 }
