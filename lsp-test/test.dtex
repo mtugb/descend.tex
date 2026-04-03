@@ -2,11 +2,12 @@ mat
     1 2
     3 4
 frac
-    hello
+    \frac{2}{3}
     world
 test + p
 mat
     1 2
     3 4
+
 
 
