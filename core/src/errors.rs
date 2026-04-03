@@ -93,5 +93,9 @@ pub enum LintErrorKind {
     },
     #[error("Unknown command: {0}")]
     UnknownCommand(String),
-    // 他に必要なものがあれば
+    #[error("Command \"{command}\" requires environment \"{required}\", but not found")]
+    RequiredEnvNotFound {
+        command: String,
+        required: String,
+    },
 }

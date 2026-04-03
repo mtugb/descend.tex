@@ -1,13 +1,13 @@
-mat
-    1 2
-    3 4
-frac
-    \frac{2}{3}
-    world
-test + p
-mat
-    1 2
-    3 4
+$$
+    mat
+        1 2
+        3 4
+    frac
+        \frac{2}{3}
+        3
+    mat
+        1 2
+        3 4
 
 
 

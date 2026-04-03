@@ -318,8 +318,12 @@ impl LanguageServer for Backend {
         let parse_res = parse_to_tree(document, &self.parser_command_config, self.indent_unit);
         match parse_res {
             Ok(root) => {
-                let tree_check_result =
-                    check_tree(root, self.indent_unit, &self.parser_command_config);
+                let tree_check_result = check_tree(
+                    root,
+                    self.indent_unit,
+                    &self.parser_command_config,
+                    Vec::new(),
+                );
                 self.client
                     .log_message(
                         MessageType::INFO,
@@ -364,7 +368,12 @@ impl Backend {
             .await;
         match parse_res {
             Ok(root) => {
-                let line_res = check_tree(root, self.indent_unit, &self.parser_command_config);
+                let line_res = check_tree(
+                    root,
+                    self.indent_unit,
+                    &self.parser_command_config,
+                    Vec::new(),
+                );
                 match line_res {
                     Ok(()) => {
                         self.client

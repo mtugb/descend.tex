@@ -11,6 +11,7 @@ args_count = 2
 ## escapement(for Regex) required
 alias = ["f"]
 completion_label = 'frac'
+parent_requirement = 'math_env'
 
 [mat]
 pattern = 'mat'
@@ -21,6 +22,7 @@ row_separator = '\\'
 col_separator = '&'
 completion_label = 'mat'
 completion_template = "mat\n    $1 $2\n    $3 $4"
+parent_requirement = 'math_env'
 
 [vmat]
 pattern = '\|mat\|'
@@ -31,6 +33,7 @@ row_separator = '\\'
 col_separator = '&'
 completion_label = '|mat|'
 completion_template = "|mat|\n    $1 $2\n    $3 $4"
+parent_requirement = 'math_env'
 
 [tmat]
 pattern = 'mat\^t'
@@ -42,6 +45,7 @@ col_separator = '&'
 output_suffix = '^{\top}'
 completion_label = 'mat^t'
 completion_template = "mat^t\n    $1 $2\n    $3 $4"
+parent_requirement = 'math_env'
 
 [lim]
 pattern = 'lim'
@@ -49,6 +53,7 @@ type = 'Template'
 template = '\lim_{$0 \to $1} $2'
 args_count = 2
 completion_label = 'lim'
+parent_requirement = 'math_env'
 
 [integral]
 pattern = 'int'
@@ -57,6 +62,7 @@ template = '\int_{$0}^{$1} $2 \, d$3'
 args_count = 4
 alias = ['integral']
 completion_label = 'int'
+parent_requirement = 'math_env'
 
 [sum]
 pattern = 'sum'
@@ -64,6 +70,7 @@ type = 'Template'
 template = '\sum_{$0}^{$1} $2'
 args_count = 3
 completion_label = 'sum'
+parent_requirement = 'math_env'
 
 [prod]
 pattern = 'prod'
@@ -71,6 +78,7 @@ type = 'Template'
 template = '\prod_{$0}^{$1} $2'
 args_count = 3
 completion_label = 'prod'
+parent_requirement = 'math_env'
 
 [sqrt]
 pattern = 'sqrt'
@@ -78,6 +86,7 @@ type = 'Template'
 template = '\sqrt{$0}'
 args_count = 1
 completion_label = 'sqrt'
+parent_requirement = 'math_env'
 
 [nsqrt]
 pattern = 'nsqrt'
@@ -85,6 +94,7 @@ type = 'Template'
 template = '\sqrt[$0]{$1}'
 args_count = 2
 completion_label = 'nsqrt'
+parent_requirement = 'math_env'
 
 [abs]
 pattern = 'abs'
@@ -92,6 +102,7 @@ type = 'Template'
 template = '\left|$0\right|'
 args_count = 1
 completion_label = 'abs'
+parent_requirement = 'math_env'
 
 [norm]
 pattern = 'norm'
@@ -99,6 +110,7 @@ type = 'Template'
 template = '\left\|$0\right\|'
 args_count = 1
 completion_label = 'norm'
+parent_requirement = 'math_env'
 
 [ceil]
 pattern = 'ceil'
@@ -106,6 +118,7 @@ type = 'Template'
 template = '\left\lceil$0\right\rceil'
 args_count = 1
 completion_label = 'ceil'
+parent_requirement = 'math_env'
 
 [floor]
 pattern = 'floor'
@@ -113,6 +126,7 @@ type = 'Template'
 template = '\left\lfloor$0\right\rfloor'
 args_count = 1
 completion_label = 'floor'
+parent_requirement = 'math_env'
 
 # Document
 [h1]
@@ -146,6 +160,7 @@ prefix = '$'
 suffix = '$'
 completion_label = '$'
 completion_template = "$\n    $1"
+provides = 'math_env'
 
 [display_math]
 pattern = '\$\$'
@@ -154,6 +169,7 @@ prefix = '\begin{align*}'
 suffix = '\end{align*}'
 completion_label = '$$'
 completion_template = "$$\n    $1"
+provides = 'math_env'
 
 # join vertical elem in horizontal direction.
 [flatten]

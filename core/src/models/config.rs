@@ -27,12 +27,16 @@ pub struct TemplateConfigRaw {
     pub alias: Option<Vec<String>>,
     pub completion_label: Option<String>,
     pub completion_template: Option<String>,
+    pub parent_requirement: Option<String>,
+    pub provides: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct RegexConfigRaw {
     pub pattern: String,
     pub template: String,
+    pub parent_requirement: Option<String>,
+    pub provides: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -45,6 +49,8 @@ pub struct WrapConfigRaw {
     pub alias: Option<Vec<String>>,
     pub completion_label: Option<String>,
     pub completion_template: Option<String>,
+    pub parent_requirement: Option<String>,
+    pub provides: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -62,6 +68,8 @@ pub struct EnvConfigRaw {
     pub col_separator: String,
     pub completion_label: Option<String>,
     pub completion_template: Option<String>,
+    pub parent_requirement: Option<String>,
+    pub provides: Option<String>,
 }
 
 // Command_config_Validated
@@ -81,12 +89,16 @@ pub struct TemplateConfig {
     pub alias: Vec<Regex>,
     pub completion_label: Option<String>,
     pub completion_template: Option<String>,
+    pub parent_requirement: Option<String>,
+    pub provides: Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct RegexConfig {
     pub pattern: Regex,
     pub template: String,
+    pub parent_requirement: Option<String>,
+    pub provides: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -98,6 +110,8 @@ pub struct WrapConfig {
     pub alias: Vec<Regex>,
     pub completion_label: Option<String>,
     pub completion_template: Option<String>,
+    pub parent_requirement: Option<String>,
+    pub provides: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -113,6 +127,8 @@ pub struct EnvConfig {
     pub col_separator: String,
     pub completion_label: Option<String>,
     pub completion_template: Option<String>,
+    pub parent_requirement: Option<String>,
+    pub provides: Option<String>,
 }
 
 impl CommandConfigRaw {
@@ -127,10 +143,14 @@ impl CommandConfigRaw {
                 })?,
                 completion_label: c.completion_label,
                 completion_template: c.completion_template,
+                parent_requirement: c.parent_requirement,
+                provides: c.provides,
             })),
             CommandConfigRaw::Regex(c) => Ok(CommandConfig::Regex(RegexConfig {
                 pattern: compile_regex(&c.pattern, &format!("{}.pattern", name))?,
                 template: c.template,
+                parent_requirement: c.parent_requirement,
+                provides: c.provides,
             })),
             CommandConfigRaw::Wrap(c) => Ok(CommandConfig::Wrap(WrapConfig {
                 pattern: compile_regex(&c.pattern, &format!("{}.pattern", name))?,
@@ -142,6 +162,8 @@ impl CommandConfigRaw {
                 })?,
                 completion_label: c.completion_label,
                 completion_template: c.completion_template,
+                parent_requirement: c.parent_requirement,
+                provides: c.provides,
             })),
             CommandConfigRaw::Env(c) => Ok(CommandConfig::Env(EnvConfig {
                 pattern: compile_regex(&c.pattern, &format!("{}.pattern", name))?,
@@ -157,6 +179,8 @@ impl CommandConfigRaw {
                 col_separator: c.col_separator,
                 completion_label: c.completion_label,
                 completion_template: c.completion_template,
+                parent_requirement: c.parent_requirement,
+                provides: c.provides,
             })),
         }
     }
