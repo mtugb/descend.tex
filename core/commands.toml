@@ -20,7 +20,7 @@ alias = ['m']
 row_separator = '\\'
 col_separator = '&'
 completion_label = 'mat'
-completion_template = "mat\n    $1 & $2 \\\\\n    $3 & $4"
+completion_template = "mat\n    $1 $2\n    $3 $4"
 
 [vmat]
 pattern = '\|mat\|'
@@ -30,7 +30,7 @@ alias = ['\|m\|']
 row_separator = '\\'
 col_separator = '&'
 completion_label = '|mat|'
-completion_template = "|mat|\n    $1 & $2 \\\\\n    $3 & $4"
+completion_template = "|mat|\n    $1 $2\n    $3 $4"
 
 [tmat]
 pattern = 'mat\^t'
@@ -41,7 +41,7 @@ row_separator = '\\'
 col_separator = '&'
 output_suffix = '^{\top}'
 completion_label = 'mat^t'
-completion_template = "mat^t\n    $1 & $2 \\\\\n    $3 & $4"
+completion_template = "mat^t\n    $1 $2\n    $3 $4"
 
 [lim]
 pattern = 'lim'
