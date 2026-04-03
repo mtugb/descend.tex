@@ -181,7 +181,8 @@ impl LanguageServer for Backend {
         let document = documents
             .get(&p.text_document.uri)
             .expect("ドキュメントの一時データへのアクセスに失敗しました");
-        let parsed = parse_to_tree(document, &self.parser_command_config, self.indent_unit);
+        let root = parse_to_tree(document, &self.parser_command_config, self.indent_unit)
+            .expect("ツリーのパースに失敗");
         fn extends_tree(current: Node) -> Vec<SemanticToken> {
             match current {
                 Node::Root {
@@ -234,7 +235,33 @@ impl LanguageServer for Backend {
                 }
             }
         }
-        Ok(None)
+        // 次にdelta_line, delta_startをちゃんと前後の差分に変える
+        let mut genuine_tokens: Vec<SemanticToken> = Vec::new();
+        let tokens_linear = extends_tree(root);
+        let mut prev_line = 0;
+        let mut prev_start = 0;
+        for token in tokens_linear {
+            let delta_line = token.delta_line - prev_line;
+            //改行なければ差分、新しい行なら絶対値を採用
+            let delta_start = if delta_line == 0 {
+                token.delta_start - prev_start
+            } else {
+                token.delta_start
+            };
+            genuine_tokens.push(SemanticToken {
+                delta_line,
+                delta_start,
+                length: token.length,
+                token_type: token.token_type,
+                token_modifiers_bitset: token.token_modifiers_bitset,
+            });
+            prev_line = token.delta_line;
+            prev_start = token.delta_start;
+        }
+        Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
+            result_id: None,
+            data: genuine_tokens,
+        })))
     }
 
     async fn shutdown(&self) -> Result<()> {
