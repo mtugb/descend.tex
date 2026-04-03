@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fmt::format;
 use std::sync::Arc;
 
 use mytex::config::load_command_config;
