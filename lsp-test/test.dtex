@@ -1,13 +1,7 @@
-$$
-    mat
-        1 2
-        3 4
-    frac
-        \frac{2}{3}
-        3
-    mat
-        1 2
-        3 4
-
+# 正値二次形式
+## 定義
+A:n次実対称行列
+$
+    x \in \boldsymbol{R}^n
 
 
