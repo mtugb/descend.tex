@@ -3,4 +3,4 @@ members = ["cli","core","core-test", "lsp"]
 resolver = "3"
 
 [workspace.package]
-version = "1.0.2"
+version = "1.0.3"
